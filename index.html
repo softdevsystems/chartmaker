@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Responsive offline swimlane system flowchart generator for student system analysis." />
+  <title>SystemFlow Studio</title>
+  <link rel="stylesheet" href="vendor/bootstrap.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar navbar-dark app-navbar no-print">
+    <div class="container-fluid flex-nowrap gap-2">
+      <button class="navbar-toggler d-lg-none border-0 shadow-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#editorSidebar" aria-controls="editorSidebar" aria-label="Open project editor">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <a class="navbar-brand d-flex align-items-center gap-3 me-auto" href="#" aria-label="SystemFlow Studio home">
+        <span class="brand-mark" aria-hidden="true">SF</span>
+        <span class="brand-copy">
+          <strong>SystemFlow Studio</strong>
+          <small>Dynamic swimlane chart generator</small>
+        </span>
+      </a>
+
+      <div class="header-actions d-flex align-items-center gap-2">
+        <button class="btn btn-header" id="newProjectBtn" type="button"><span class="d-none d-md-inline">New Project</span><span class="d-md-none">New</span></button>
+        <button class="btn btn-header" id="loadSampleBtn" type="button"><span class="d-none d-md-inline">Market Sample</span><span class="d-md-none">Sample</span></button>
+        <button class="btn btn-header" id="saveBrowserBtn" type="button">Save</button>
+        <button class="btn btn-primary btn-generate" id="generateBtn" type="button"><span class="d-none d-sm-inline">Generate Chart</span><span class="d-sm-none">Generate</span></button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="app-shell">
+    <aside class="offcanvas offcanvas-start editor-sidebar no-print" tabindex="-1" id="editorSidebar" aria-labelledby="editorSidebarLabel">
+      <div class="offcanvas-header d-lg-none border-bottom">
+        <div>
+          <p class="section-kicker mb-1">Project editor</p>
+          <h2 class="offcanvas-title fs-5" id="editorSidebarLabel">Build your flowchart</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+
+      <div class="offcanvas-body p-0 d-block">
+        <nav class="tab-list" aria-label="Editor sections">
+          <button class="tab-btn active" data-tab="project" type="button"><span>1</span> Project</button>
+          <button class="tab-btn" data-tab="actors" type="button"><span>2</span> Swimlanes</button>
+          <button class="tab-btn" data-tab="flow" type="button"><span>3</span> Flow</button>
+          <button class="tab-btn" data-tab="export" type="button"><span>4</span> Export</button>
+        </nav>
+
+        <section class="tab-panel active" id="tab-project">
+          <div class="panel-heading">
+            <p class="section-kicker">Step 1</p>
+            <h2>Project information</h2>
+            <p>Enter the title and paste the complete process using one sentence per step.</p>
+          </div>
+
+          <label class="form-label" for="projectTitle">System title</label>
+          <input class="form-control" id="projectTitle" type="text" placeholder="Example: Market Stall Collection System" />
+
+          <label class="form-label mt-3" for="projectDescription">System description</label>
+          <textarea class="form-control" id="projectDescription" rows="3" placeholder="Describe the main purpose of the system."></textarea>
+
+          <label class="form-label mt-3" for="requirementsText">Integrated process steps</label>
+          <textarea class="form-control requirements-box" id="requirementsText" rows="12" placeholder="Administrator opens the vendor registration form.&#10;System checks whether the requirements are complete.&#10;Collector records the vendor payment.&#10;System sends an SMS confirmation."></textarea>
+          <div class="form-text">Write one complete sentence per line and begin with the actor, such as “Teacher records grades” or “Municipal Engineer approves the request.”</div>
+
+          <div class="d-grid gap-2 d-sm-flex mt-3">
+            <button class="btn btn-primary flex-fill" id="analyzeRequirementsBtn" type="button">Analyze and Build Draft</button>
+            <button class="btn btn-light border" id="clearRequirementsBtn" type="button">Clear</button>
+          </div>
+
+          <div class="info-card mt-3">
+            <strong>How it works</strong>
+            <p>The offline analyzer recognizes standard and custom actors from each sentence, including Teacher, Passenger, Driver, Student, Head, Rider, Collector, Cashier, Registrar, and other project-specific roles.</p>
+          </div>
+        </section>
+
+        <section class="tab-panel" id="tab-actors">
+          <div class="panel-heading">
+            <p class="section-kicker">Step 2</p>
+            <h2>Actors and swimlanes</h2>
+            <p>Detected roles appear automatically, and you can still add, remove, or reorder any person, system, service, database, or device.</p>
+          </div>
+
+          <form id="actorForm" class="stack-form">
+            <label class="form-label" for="actorName">Actor name</label>
+            <input class="form-control" id="actorName" type="text" placeholder="Example: Teacher, Driver, Registrar" required />
+
+            <label class="form-label mt-3" for="actorType">Actor type</label>
+            <select class="form-select" id="actorType">
+              <option>User</option>
+              <option>Administrator</option>
+              <option>System</option>
+              <option>External Service</option>
+              <option>Database</option>
+              <option>Device</option>
+            </select>
+
+            <button class="btn btn-primary mt-3" type="submit">Add Swimlane</button>
+          </form>
+          <div id="actorList" class="item-list"></div>
+        </section>
+
+        <section class="tab-panel" id="tab-flow">
+          <div class="panel-heading">
+            <p class="section-kicker">Step 3</p>
+            <h2>Flow builder</h2>
+            <p>Edit the shapes and connect them in the correct sequence.</p>
+          </div>
+
+          <form id="nodeForm" class="stack-form">
+            <input id="nodeId" type="hidden" />
+
+            <label class="form-label" for="nodeLabel">Step label</label>
+            <input class="form-control" id="nodeLabel" type="text" placeholder="Example: Validate Cash Ticket Number" required />
+
+            <div class="row g-2 mt-1">
+              <div class="col-12 col-sm-6">
+                <label class="form-label" for="nodeActor">Actor</label>
+                <select class="form-select" id="nodeActor" required></select>
+              </div>
+              <div class="col-12 col-sm-6">
+                <label class="form-label" for="nodeType">Shape</label>
+                <select class="form-select" id="nodeType">
+                  <option value="startRound">Start Round</option>
+                  <option value="endRound">End Round</option>
+                  <option value="startOval">Start / End Oval</option>
+                  <option value="process" selected>Process</option>
+                  <option value="input">Input / Output</option>
+                  <option value="decision">Decision</option>
+                  <option value="database">Database</option>
+                  <option value="document">Document</option>
+                  <option value="subprocess">Subprocess</option>
+                </select>
+              </div>
+            </div>
+
+            <label class="form-label mt-3" for="nodeDescription">Description</label>
+            <textarea class="form-control" id="nodeDescription" rows="3" placeholder="Explain the purpose or processing performed in this step."></textarea>
+
+            <div class="d-grid gap-2 d-sm-flex mt-3">
+              <button class="btn btn-primary flex-fill" type="submit">Save Step</button>
+              <button class="btn btn-light border" type="button" id="resetNodeBtn">Reset</button>
+            </div>
+          </form>
+
+          <hr class="my-4" />
+          <h3 class="h6 fw-bold">Connect steps</h3>
+          <form id="edgeForm" class="stack-form">
+            <div class="row g-2">
+              <div class="col-12 col-sm-6">
+                <label class="form-label" for="edgeFrom">From</label>
+                <select class="form-select" id="edgeFrom" required></select>
+              </div>
+              <div class="col-12 col-sm-6">
+                <label class="form-label" for="edgeTo">To</label>
+                <select class="form-select" id="edgeTo" required></select>
+              </div>
+            </div>
+
+            <label class="form-label mt-3" for="edgeLabel">Arrow label</label>
+            <input class="form-control" id="edgeLabel" type="text" placeholder="YES, NO, Submit, Approve, etc." />
+            <button class="btn btn-outline-primary mt-3" type="submit">Add Connection</button>
+          </form>
+
+          <div class="d-grid gap-2 d-sm-flex my-3">
+            <button class="btn btn-light border flex-fill" id="autoLayoutBtn" type="button">Auto Arrange</button>
+            <button class="btn btn-outline-danger" id="clearFlowBtn" type="button">Clear Flow</button>
+          </div>
+          <div id="nodeList" class="item-list"></div>
+          <div id="edgeList" class="item-list"></div>
+        </section>
+
+        <section class="tab-panel" id="tab-export">
+          <div class="panel-heading">
+            <p class="section-kicker">Step 4</p>
+            <h2>Export chart</h2>
+            <p>Download or print the generated flowchart.</p>
+          </div>
+
+          <div class="export-grid export-grid-clean">
+            <button class="btn btn-primary" id="exportPngBtn" type="button">Export Ultra HD PNG</button>
+            <button class="btn btn-outline-primary" id="exportSvgBtn" type="button">Export Editable SVG</button>
+            <button class="btn btn-outline-success" id="importSvgBtn" type="button">Import SVG to Edit</button>
+            <input id="importSvgFile" type="file" accept=".svg,image/svg+xml" hidden />
+            <button class="btn btn-outline-primary" id="exportPdfBtn" type="button">Export PDF</button>
+            <button class="btn btn-light border" id="printBtn" type="button">Print Chart</button>
+          </div>
+
+          <div class="info-card mt-3">
+            <strong>Editable export and high-quality image</strong>
+            <p>The SVG export stores the complete project data, so it can be imported here and edited again. PNG is rendered at up to 4× resolution for clearer zooming and printing, while SVG remains fully scalable.</p>
+          </div>
+        </section>
+
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="workspace-toolbar no-print">
+        <div class="status-group">
+          <span class="status-dot" id="projectStatusDot"></span>
+          <span id="projectStatus">Ready</span>
+        </div>
+        <div class="toolbar-actions">
+          <button class="icon-btn" id="zoomOutBtn" title="Zoom out" type="button" aria-label="Zoom out">−</button>
+          <span id="zoomLabel">100%</span>
+          <button class="icon-btn" id="zoomInBtn" title="Zoom in" type="button" aria-label="Zoom in">+</button>
+          <button class="btn btn-sm btn-light border" id="fitBtn" type="button">Fit</button>
+          <button class="btn btn-sm btn-light border" id="toggleGridBtn" type="button">Grid</button>
+        </div>
+      </div>
+
+      <div class="chart-stage grid-on" id="chartStage">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon" aria-hidden="true">◇</div>
+          <h2>Create a clear system flowchart</h2>
+          <p>Enter the process, generate the chart, then click any shape to edit it directly.</p>
+          <button class="btn btn-primary no-print" id="emptyLoadSampleBtn" type="button">Open Market System Sample</button>
+        </div>
+        <div class="svg-wrap" id="svgWrap">
+          <svg id="flowSvg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Generated swimlane flowchart"></svg>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="detailDialog">
+    <form method="dialog" id="detailForm">
+      <div class="dialog-head">
+        <div>
+          <p class="section-kicker mb-1">Direct chart edit</p>
+          <h2 id="detailTitle">Edit flow step</h2>
+        </div>
+        <button class="icon-btn" id="closeDialogBtn" aria-label="Close" type="button">×</button>
+      </div>
+      <div class="detail-content">
+        <input type="hidden" id="detailNodeId" />
+
+        <label class="form-label" for="detailNodeLabel">Step label</label>
+        <input class="form-control" id="detailNodeLabel" type="text" required />
+
+        <div class="row g-2 mt-1">
+          <div class="col-12 col-sm-6">
+            <label class="form-label" for="detailNodeActor">Actor</label>
+            <select class="form-select" id="detailNodeActor" required></select>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="form-label" for="detailNodeType">Shape</label>
+            <select class="form-select" id="detailNodeType">
+              <option value="startRound">Start Round</option>
+              <option value="endRound">End Round</option>
+              <option value="startOval">Start / End Oval</option>
+              <option value="process">Process</option>
+              <option value="input">Input / Output</option>
+              <option value="decision">Decision</option>
+              <option value="database">Database</option>
+              <option value="document">Document</option>
+              <option value="subprocess">Subprocess</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="form-label mt-3" for="detailDescription">Description</label>
+        <textarea class="form-control" id="detailDescription" rows="4" placeholder="Explain this flow step."></textarea>
+
+        <div class="dialog-actions">
+          <button class="btn btn-primary" id="saveDetailBtn" type="submit">Save Changes</button>
+          <button class="btn btn-outline-danger" id="deleteDetailBtn" type="button">Delete Step</button>
+          <button class="btn btn-light border" id="cancelDetailBtn" type="button">Cancel</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="app-toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="vendor/bootstrap.bundle.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
